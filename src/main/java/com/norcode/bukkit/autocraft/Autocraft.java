@@ -33,6 +33,8 @@ public class Autocraft extends JavaPlugin implements Listener {
     private static EnumSet<BlockFace> sides = EnumSet.of(BlockFace.EAST, BlockFace.WEST, BlockFace.NORTH, BlockFace.SOUTH);
     private static final int itemFrameEntityId = EntityType.ITEM_FRAME.getTypeId();
     private boolean worldWhitelist = true;
+    private boolean recipeWhitelist = false;
+    EnumSet<Material> recipeList = EnumSet.noneOf(Material.class);
     private String noPermissionMsg;
     private List<String> worldList = new ArrayList<String>();
 
@@ -45,6 +47,7 @@ public class Autocraft extends JavaPlugin implements Listener {
 
     public void loadConfig() {
         String noPermissionMsg = getConfig().getString("messages.no-permission", null);
+        // world list
         String listtype = getConfig().getString("world-selection", "whitelist").toLowerCase();
         if (listtype.equals("blacklist")) {
             this.worldWhitelist = false;
@@ -54,6 +57,17 @@ public class Autocraft extends JavaPlugin implements Listener {
         this.worldList.clear();
         for (String wn: getConfig().getStringList("world-list")) {
             this.worldList.add(wn.toLowerCase());
+        }
+        // recipe list
+        listtype = getConfig().getString("recipe-selection", "blacklist").toLowerCase();
+        if (listtype.equals("whitelist")) {
+            this.recipeWhitelist = true;
+        } else {
+            this.recipeWhitelist = false;
+        }
+        this.recipeList.clear();
+        for (String r: getConfig().getStringList("recipe-list")) {
+            this.recipeList.add(Material.valueOf(r));
         }
     }
 
@@ -77,6 +91,11 @@ public class Autocraft extends JavaPlugin implements Listener {
         return enabled;
     }
 
+    public boolean recipeAllowed(ItemStack stack) {
+        boolean inList = recipeList.contains(stack.getType());
+        return ((recipeWhitelist && inList) || (!recipeWhitelist && !inList));
+    }
+
     @EventHandler(ignoreCancelled=true)
     public void onFrameInteract(PlayerInteractEntityEvent event) {
         if (!enabledInWorld(event.getPlayer().getWorld())) return;
@@ -95,9 +114,7 @@ public class Autocraft extends JavaPlugin implements Listener {
     }
 
     private boolean hasCraftPermission(Player player, ItemStack hand) {
-        String node = "autocraft.create." + hand.getTypeId();
-        boolean has = player.hasPermission(node);
-        return has;
+        return player.hasPermission("autocraft.create." + hand.getType().name().toLowerCase());
     }
 
     @EventHandler(ignoreCancelled=true)
@@ -105,6 +122,8 @@ public class Autocraft extends JavaPlugin implements Listener {
         if (event.getSource().getHolder() instanceof Dropper) {
             final Dropper dropper = ((Dropper) event.getSource().getHolder());
             ItemFrame frame = getAttachedFrame(dropper.getBlock());
+            if (!enabledInWorld(dropper.getWorld())) return;
+            if (!recipeAllowed(frame.getItem())) return;
             ItemStack result = null;
             Recipe recipe = null;
             if (frame != null && frame.getItem() != null && !frame.getItem().getType().equals(Material.AIR)) {
@@ -133,10 +152,8 @@ public class Autocraft extends JavaPlugin implements Listener {
                     }
                 }
                 if (!crafted) {
-                    getLogger().info(dropper.getLocation() + " -> Cancelled event, couldn't craft");
                     event.setCancelled(true);
                 } else {
-                    getLogger().info(dropper.getLocation() + " -> Successfully crafted: " + result + ", dispensing");
                     event.setItem(result);
                     final Recipe finalRecipe = recipe;
                     getServer().getScheduler().runTaskLater(this,  new Runnable() {
@@ -154,9 +171,10 @@ public class Autocraft extends JavaPlugin implements Listener {
     @EventHandler(ignoreCancelled=true)
     public void onDropperFire(BlockDispenseEvent event) {
         if (event.getBlock().getType().equals(Material.DROPPER)) {
-            getLogger().info(event.getBlock().getLocation() + " -> firing " + event.getItem());
             final Dropper dropper = ((Dropper) event.getBlock().getState());
             ItemFrame frame = getAttachedFrame(event.getBlock());
+            if (!enabledInWorld(dropper.getWorld())) return;
+            if (!recipeAllowed(frame.getItem())) return;
             ItemStack result = null;
             Recipe recipe = null;
             if (frame != null && frame.getItem() != null && !frame.getItem().getType().equals(Material.AIR)) {
@@ -185,10 +203,8 @@ public class Autocraft extends JavaPlugin implements Listener {
                     }
                 }
                 if (!crafted) {
-                    getLogger().info(event.getBlock().getLocation() + " -> Cancelled event, couldn't craft");
                     event.setCancelled(true);
                 } else {
-                    getLogger().info(event.getBlock().getLocation() + " -> Successfully crafted: " + result + ", dispensing");
                     event.setItem(result);
                     final Recipe finalRecipe = recipe;
                     getServer().getScheduler().runTaskLater(this,  new Runnable() {
