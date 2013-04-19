@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.norcode.bukkit.autocraft</groupId>
-  <artifactId>Autocraft</artifactId>
+  <groupId>com.norcode.bukkit.autocrafter</groupId>
+  <artifactId>Autocrafter</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <repositories>
     <repository>
@@ -13,7 +13,7 @@
     <dependency>
       <groupId>org.bukkit</groupId>
       <artifactId>bukkit</artifactId>
-      <version>1.5.1-R0.1</version>
+      <version>1.5.1-R0.2</version>
     </dependency>
   </dependencies>
 </project>
