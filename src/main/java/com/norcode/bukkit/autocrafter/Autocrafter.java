@@ -80,14 +80,17 @@ public class Autocrafter extends JavaPlugin implements Listener {
         Permission child = null;
         for (Material m: Material.values()) {
             if (recipeAllowed(new ItemStack(m))) {
+                getLogger().info("Creating node: " + m);
                 child = getServer().getPluginManager().getPermission("autocrafter.create." + m.name().toLowerCase());
                 if (child == null) {
                     child = new Permission("autocrafter.create." + m.name().toLowerCase(), PermissionDefault.FALSE);
                     getServer().getPluginManager().addPermission(child);
                 }
                 child.addParent(wildcardPerm, true);
+                child.recalculatePermissibles();
             }
         }
+        wildcardPerm.recalculatePermissibles();
     }
 
     public void printInventoryContents(Inventory inv) {
