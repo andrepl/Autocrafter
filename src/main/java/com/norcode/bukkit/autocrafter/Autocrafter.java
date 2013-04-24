@@ -36,6 +36,7 @@ public class Autocrafter extends JavaPlugin implements Listener {
     private static final int itemFrameEntityId = EntityType.ITEM_FRAME.getTypeId();
     private boolean worldWhitelist = true;
     private boolean recipeWhitelist = false;
+    private static EnumSet<Material> filledBuckets = EnumSet.of(Material.MILK_BUCKET, Material.LAVA_BUCKET, Material.WATER_BUCKET);
     EnumSet<Material> recipeList = EnumSet.noneOf(Material.class);
     private String noPermissionMsg;
     private List<String> worldList = new ArrayList<String>();
@@ -189,6 +190,9 @@ public class Autocrafter extends JavaPlugin implements Listener {
                         public void run () {
                             for (ItemStack ing: CraftAttempt.getIngredients(finalRecipe)) {
                                 CraftAttempt.removeItem(dropper.getInventory(), ing.getType(), ing.getData().getData(), ing.getAmount());
+                                if (filledBuckets.contains(ing.getType())) {
+                                    dropper.getInventory().addItem(new ItemStack(Material.BUCKET));
+                                }
                             }
                         }
                     }, 0);
@@ -240,6 +244,9 @@ public class Autocrafter extends JavaPlugin implements Listener {
                         public void run () {
                             for (ItemStack ing: CraftAttempt.getIngredients(finalRecipe)) {
                                 CraftAttempt.removeItem(dropper.getInventory(), ing.getType(), ing.getData().getData(), ing.getAmount());
+                                if (filledBuckets.contains(ing.getType())) {
+                                    dropper.getInventory().addItem(new ItemStack(Material.BUCKET));
+                                }
                             }
                         }
                     }, 0);
