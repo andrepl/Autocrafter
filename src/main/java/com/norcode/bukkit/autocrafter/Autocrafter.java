@@ -81,7 +81,6 @@ public class Autocrafter extends JavaPlugin implements Listener {
         Permission child = null;
         for (Material m: Material.values()) {
             if (recipeAllowed(new ItemStack(m))) {
-                getLogger().info("Creating node: " + m);
                 child = getServer().getPluginManager().getPermission("autocrafter.create." + m.name().toLowerCase());
                 if (child == null) {
                     child = new Permission("autocrafter.create." + m.name().toLowerCase(), PermissionDefault.FALSE);
@@ -151,8 +150,11 @@ public class Autocrafter extends JavaPlugin implements Listener {
     public void onDropperMove(InventoryMoveItemEvent event) {
         if (event.getSource().getHolder() instanceof Dropper) {
             final Dropper dropper = ((Dropper) event.getSource().getHolder());
-            ItemFrame frame = getAttachedFrame(dropper.getBlock());
             if (!enabledInWorld(dropper.getWorld())) return;
+            ItemFrame frame = getAttachedFrame(dropper.getBlock());
+            if (frame == null) {
+        	return;
+            }
             if (!recipeAllowed(frame.getItem())) return;
             ItemStack result = null;
             Recipe recipe = null;
@@ -205,8 +207,9 @@ public class Autocrafter extends JavaPlugin implements Listener {
     public void onDropperFire(BlockDispenseEvent event) {
         if (event.getBlock().getType().equals(Material.DROPPER)) {
             final Dropper dropper = ((Dropper) event.getBlock().getState());
-            ItemFrame frame = getAttachedFrame(event.getBlock());
             if (!enabledInWorld(dropper.getWorld())) return;
+            ItemFrame frame = getAttachedFrame(event.getBlock());
+            if (frame == null) return;
             if (!recipeAllowed(frame.getItem())) return;
             ItemStack result = null;
             Recipe recipe = null;
