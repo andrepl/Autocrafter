@@ -1,6 +1,6 @@
+use-permissions: true
 messages:
   no-permission: "Sorry, you don't have permission to create an Autocrafter of that type."
-
 world-selection: whitelist
 world-list:
   - world

@@ -34,6 +34,7 @@ import java.util.HashSet;
 public class Autocrafter extends JavaPlugin implements Listener {
     private static EnumSet<BlockFace> sides = EnumSet.of(BlockFace.EAST, BlockFace.WEST, BlockFace.NORTH, BlockFace.SOUTH);
     private static final int itemFrameEntityId = EntityType.ITEM_FRAME.getTypeId();
+    private boolean usePermissions = true;
     private boolean worldWhitelist = true;
     private boolean recipeWhitelist = false;
     private static EnumSet<Material> filledBuckets = EnumSet.of(Material.MILK_BUCKET, Material.LAVA_BUCKET, Material.WATER_BUCKET);
@@ -50,6 +51,7 @@ public class Autocrafter extends JavaPlugin implements Listener {
     }
 
     public void loadConfig() {
+	this.usePermissions = getConfig().getBoolean("use-permissions", true);
         noPermissionMsg = getConfig().getString("messages.no-permission", null);
         // world list
         String listtype = getConfig().getString("world-selection", "whitelist").toLowerCase();
@@ -141,6 +143,7 @@ public class Autocrafter extends JavaPlugin implements Listener {
     }
 
     private boolean hasCraftPermission(Player player, ItemStack hand) {
+	if (!usePermissions) return true;
         String node ="autocrafter.create." + hand.getType().name().toLowerCase(); 
         boolean b = player.hasPermission(node);
         return b;
