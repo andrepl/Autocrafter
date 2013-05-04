@@ -158,16 +158,16 @@ public class Autocrafter extends JavaPlugin implements Listener {
             if (frame == null) {
         	return;
             }
-            if (!recipeAllowed(frame.getItem())) return;
+            if (!recipeAllowed(getFrameItem(frame))) return;
             ItemStack result = null;
             Recipe recipe = null;
             if (frame != null && frame.getItem() != null && !frame.getItem().getType().equals(Material.AIR)) {
-                if (event.getItem().equals(frame.getItem())) {
+                if (event.getItem().equals(getFrameItem(frame))) {
                     return;
                 }
                 boolean crafted = false;
                 ItemStack[] ingredients = null;
-                for (Recipe r: getServer().getRecipesFor(frame.getItem())) {
+                for (Recipe r: getServer().getRecipesFor(getFrameItem(frame))) {
                     if (r instanceof ShapedRecipe || r instanceof ShapelessRecipe) {
                         ingredients = CraftAttempt.getIngredients(r).toArray(new ItemStack[0]);
                         Inventory clone = CraftAttempt.cloneInventory(this, dropper.getInventory());
@@ -206,6 +206,16 @@ public class Autocrafter extends JavaPlugin implements Listener {
         }
     }
 
+    private ItemStack getFrameItem(ItemFrame frame) {
+	ItemStack stack = frame.getItem();
+	short max = stack.getType().getMaxDurability();
+	if (max > 0 && stack.getDurability() != 0) {
+	    stack = stack.clone();
+	    stack.setDurability((short) 0);
+	}
+	return stack;
+    }
+
     @EventHandler(ignoreCancelled=true)
     public void onDropperFire(BlockDispenseEvent event) {
         if (event.getBlock().getType().equals(Material.DROPPER)) {
@@ -213,16 +223,16 @@ public class Autocrafter extends JavaPlugin implements Listener {
             if (!enabledInWorld(dropper.getWorld())) return;
             ItemFrame frame = getAttachedFrame(event.getBlock());
             if (frame == null) return;
-            if (!recipeAllowed(frame.getItem())) return;
+            if (!recipeAllowed(getFrameItem(frame))) return;
             ItemStack result = null;
             Recipe recipe = null;
             if (frame != null && frame.getItem() != null && !frame.getItem().getType().equals(Material.AIR)) {
-                if (event.getItem().equals(frame.getItem())) {
+                if (event.getItem().equals(getFrameItem(frame))) {
                     return;
                 }
                 boolean crafted = false;
                 ItemStack[] ingredients = null;
-                for (Recipe r: getServer().getRecipesFor(frame.getItem())) {
+                for (Recipe r: getServer().getRecipesFor(getFrameItem(frame))) {
                     if (r instanceof ShapedRecipe || r instanceof ShapelessRecipe) {
                         ingredients = CraftAttempt.getIngredients(r).toArray(new ItemStack[0]);
                         Inventory clone = CraftAttempt.cloneInventory(this, dropper.getInventory());
