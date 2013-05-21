@@ -5,6 +5,10 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 
+import net.h31ix.updater.Updater;
+import net.h31ix.updater.Updater.UpdateResult;
+
+import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -21,6 +25,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
@@ -41,8 +46,9 @@ public class Autocrafter extends JavaPlugin implements Listener {
     EnumSet<Material> recipeList = EnumSet.noneOf(Material.class);
     private String noPermissionMsg;
     private List<String> worldList = new ArrayList<String>();
-
     private Permission wildcardPerm = null;
+    private Updater updater;
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
@@ -50,8 +56,45 @@ public class Autocrafter extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
     }
 
+    @EventHandler(ignoreCancelled=true)
+    public void onPlayerLogin(PlayerLoginEvent event) {
+        final String playerName = event.getPlayer().getName();
+        if (event.getPlayer().hasPermission("autocrafter.admin")) {
+            getServer().getScheduler().runTaskLaterAsynchronously(this, new Runnable() {
+                public void run() {
+                    Player player = getServer().getPlayer(playerName);
+                    if (player != null && player.isOnline()) {
+                        String autoUpdate = getConfig().getString("auto-update").toLowerCase();
+                        if (!autoUpdate.equals("false")) {
+                            // notify only
+                            UpdateResult result = updater.getResult();
+                            switch (result) {
+                            case SUCCESS:
+                                player.sendMessage(ChatColor.GOLD + "[AutoCrafter] " + ChatColor.WHITE + "A new update has been downloaded and is will take effect when the server restarts.");
+                                break;
+                            case UPDATE_AVAILABLE:
+                                player.sendMessage(ChatColor.GOLD + "[AutoCrafter] " + ChatColor.WHITE + "A new update is available at: http://dev.bukkit.org/server-mods/autocrafter/");
+                            }
+                        }
+                    }
+                }
+            }, 20);
+        }
+    }
     public void loadConfig() {
-	this.usePermissions = getConfig().getBoolean("use-permissions", true);
+        if (!getConfig().contains("auto-update")) {
+            getConfig().set("auto-update",  "true");
+            saveConfig();
+        }
+        String autoUpdate = getConfig().getString("auto-update").toLowerCase();
+        if (autoUpdate.equals("true")) {
+            updater = new Updater(this, "autocrafter", this.getFile(), Updater.UpdateType.DEFAULT, true);
+        } else if (autoUpdate.equals("false")) {
+            getLogger().info("Auto-updater is disabled. Not checking for updates.");
+        } else {
+            updater = new Updater(this, "autocrafter", this.getFile(), Updater.UpdateType.NO_DOWNLOAD, true);
+        }
+        this.usePermissions = getConfig().getBoolean("use-permissions", true);
         noPermissionMsg = getConfig().getString("messages.no-permission", null);
         // world list
         String listtype = getConfig().getString("world-selection", "whitelist").toLowerCase();
