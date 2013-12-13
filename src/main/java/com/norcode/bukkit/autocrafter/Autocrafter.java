@@ -27,6 +27,7 @@ import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.ShapedRecipe;
@@ -52,6 +53,8 @@ public class Autocrafter extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        getConfig().options().copyDefaults(true);
+        saveConfig();
         loadConfig();
         getServer().getPluginManager().registerEvents(this, this);
     }
@@ -59,6 +62,7 @@ public class Autocrafter extends JavaPlugin implements Listener {
     @EventHandler(ignoreCancelled=true)
     public void onPlayerLogin(PlayerLoginEvent event) {
         final String playerName = event.getPlayer().getName();
+        if (updater == null) return;
         if (event.getPlayer().hasPermission("autocrafter.admin")) {
             getServer().getScheduler().runTaskLaterAsynchronously(this, new Runnable() {
                 public void run() {
@@ -66,7 +70,6 @@ public class Autocrafter extends JavaPlugin implements Listener {
                     if (player != null && player.isOnline()) {
                         String autoUpdate = getConfig().getString("auto-update").toLowerCase();
                         if (!autoUpdate.equals("false")) {
-                            // notify only
                             UpdateResult result = updater.getResult();
                             switch (result) {
                             case SUCCESS:
@@ -120,7 +123,7 @@ public class Autocrafter extends JavaPlugin implements Listener {
         }
         wildcardPerm = getServer().getPluginManager().getPermission("autocrafter.create.*");
         if (wildcardPerm == null) {
-            wildcardPerm = new Permission("autocrafter.create.*", PermissionDefault.FALSE);
+            wildcardPerm = new Permission("autocrafter.create.*", PermissionDefault.OP);
             getServer().getPluginManager().addPermission(wildcardPerm);
         }
         Permission child = null;
@@ -192,14 +195,30 @@ public class Autocrafter extends JavaPlugin implements Listener {
         return b;
     }
 
+	private static boolean sourceIsInitiator(InventoryMoveItemEvent event) {
+		InventoryHolder sourceHolder = event.getSource().getHolder();
+		InventoryHolder initiatorHolder = event.getInitiator().getHolder();
+		if (sourceHolder instanceof Dropper) {
+			if (initiatorHolder instanceof Dropper) {
+				Location sLoc = ((Dropper) sourceHolder).getLocation();
+				Location iLoc = ((Dropper) sourceHolder).getLocation();
+				return sLoc.equals(iLoc);
+			}
+		}
+		return false;
+	}
+
     @EventHandler(ignoreCancelled=true)
     public void onDropperMove(InventoryMoveItemEvent event) {
         if (event.getSource().getHolder() instanceof Dropper) {
+			if (!sourceIsInitiator(event)) {
+				return;
+			}
             final Dropper dropper = ((Dropper) event.getSource().getHolder());
             if (!enabledInWorld(dropper.getWorld())) return;
             ItemFrame frame = getAttachedFrame(dropper.getBlock());
             if (frame == null) {
-        	return;
+        		return;
             }
             if (!recipeAllowed(getFrameItem(frame))) return;
             ItemStack result = null;
@@ -208,16 +227,21 @@ public class Autocrafter extends JavaPlugin implements Listener {
                 if (event.getItem().equals(getFrameItem(frame))) {
                     return;
                 }
+                debug("Attempting to craft " + getFrameItem(frame));
                 boolean crafted = false;
                 ItemStack[] ingredients = null;
                 for (Recipe r: getServer().getRecipesFor(getFrameItem(frame))) {
+                    debug("Checking recipe: " + r);
                     if (r instanceof ShapedRecipe || r instanceof ShapelessRecipe) {
                         ingredients = CraftAttempt.getIngredients(r).toArray(new ItemStack[0]);
                         Inventory clone = CraftAttempt.cloneInventory(this, dropper.getInventory());
+                        // for this even, the item NOT already been removed, so we don't need to re-add it to the
+						// cloned inventory.
                         //clone.addItem(event.getItem());
                         crafted = true;
                         for (ItemStack ing: ingredients) {
                             if (!CraftAttempt.removeItem(clone, ing.getType(), ing.getData().getData(), ing.getAmount())) {
+                                debug("Failed to find" + ing + " in inventory");
                                 crafted = false;
                                 break;
                             }
@@ -249,6 +273,12 @@ public class Autocrafter extends JavaPlugin implements Listener {
         }
     }
 
+    private void debug(String s) {
+        if (getConfig().getBoolean("debug", false)) {
+            getLogger().info(s);
+        }
+    }
+
     private ItemStack getFrameItem(ItemFrame frame) {
 	ItemStack stack = frame.getItem();
 	short max = stack.getType().getMaxDurability();
@@ -273,9 +303,11 @@ public class Autocrafter extends JavaPlugin implements Listener {
                 if (event.getItem().equals(getFrameItem(frame))) {
                     return;
                 }
+                debug("Attempting to craft " + getFrameItem(frame));
                 boolean crafted = false;
                 ItemStack[] ingredients = null;
                 for (Recipe r: getServer().getRecipesFor(getFrameItem(frame))) {
+                    debug("Checking recipe: " + r);
                     if (r instanceof ShapedRecipe || r instanceof ShapelessRecipe) {
                         ingredients = CraftAttempt.getIngredients(r).toArray(new ItemStack[0]);
                         Inventory clone = CraftAttempt.cloneInventory(this, dropper.getInventory());
@@ -283,6 +315,8 @@ public class Autocrafter extends JavaPlugin implements Listener {
                         crafted = true;
                         for (ItemStack ing: ingredients) {
                             if (!CraftAttempt.removeItem(clone, ing.getType(), ing.getData().getData(), ing.getAmount())) {
+                                debug("Failed to find" + ing + " in inventory");
+
                                 crafted = false;
                                 break;
                             }
