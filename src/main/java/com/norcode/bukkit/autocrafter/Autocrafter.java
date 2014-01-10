@@ -2,11 +2,9 @@ package com.norcode.bukkit.autocrafter;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
 
-import net.h31ix.updater.Updater;
-import net.h31ix.updater.Updater.UpdateResult;
+import net.gravitydevelopment.updater.Updater;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
@@ -70,7 +68,7 @@ public class Autocrafter extends JavaPlugin implements Listener {
                     if (player != null && player.isOnline()) {
                         String autoUpdate = getConfig().getString("auto-update").toLowerCase();
                         if (!autoUpdate.equals("false")) {
-                            UpdateResult result = updater.getResult();
+                            Updater.UpdateResult result = updater.getResult();
                             switch (result) {
                             case SUCCESS:
                                 player.sendMessage(ChatColor.GOLD + "[AutoCrafter] " + ChatColor.WHITE + "A new update has been downloaded and is will take effect when the server restarts.");
@@ -91,11 +89,11 @@ public class Autocrafter extends JavaPlugin implements Listener {
         }
         String autoUpdate = getConfig().getString("auto-update").toLowerCase();
         if (autoUpdate.equals("true")) {
-            updater = new Updater(this, "autocrafter", this.getFile(), Updater.UpdateType.DEFAULT, true);
+            updater = new Updater(this, 56042, this.getFile(), Updater.UpdateType.DEFAULT, true);
         } else if (autoUpdate.equals("false")) {
             getLogger().info("Auto-updater is disabled. Not checking for updates.");
         } else {
-            updater = new Updater(this, "autocrafter", this.getFile(), Updater.UpdateType.NO_DOWNLOAD, true);
+            updater = new Updater(this, 56042, this.getFile(), Updater.UpdateType.NO_DOWNLOAD, true);
         }
         this.usePermissions = getConfig().getBoolean("use-permissions", true);
         noPermissionMsg = getConfig().getString("messages.no-permission", null);
