@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.norcode.bukkit.autocrafter</groupId>
   <artifactId>Autocrafter</artifactId>
-  <version>0.1.1</version>
+  <version>0.1.2-SNAPSHOT</version>
 
     <scm>
         <connection>scm:git:git://github.com/andrepl/Autocrafter.git</connection>

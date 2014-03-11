@@ -1,11 +1,6 @@
 package com.norcode.bukkit.autocrafter;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-
 import net.gravitydevelopment.updater.Updater;
-
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -33,7 +28,11 @@ import org.bukkit.inventory.ShapelessRecipe;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 
 public class Autocrafter extends JavaPlugin implements Listener {
     private static EnumSet<BlockFace> sides = EnumSet.of(BlockFace.EAST, BlockFace.WEST, BlockFace.NORTH, BlockFace.SOUTH);
@@ -47,6 +46,7 @@ public class Autocrafter extends JavaPlugin implements Listener {
     private List<String> worldList = new ArrayList<String>();
     private Permission wildcardPerm = null;
     private Updater updater;
+	private boolean debug = false;
 
     @Override
     public void onEnable() {
@@ -83,11 +83,14 @@ public class Autocrafter extends JavaPlugin implements Listener {
         }
     }
     public void loadConfig() {
+		debug = getConfig().getBoolean("debug", false);
+		debug("Loading Autocrafter Config...");
         if (!getConfig().contains("auto-update")) {
             getConfig().set("auto-update",  "true");
             saveConfig();
         }
-        String autoUpdate = getConfig().getString("auto-update").toLowerCase();
+		debug(" ... configuring auto-update");
+		String autoUpdate = getConfig().getString("auto-update").toLowerCase();
         if (autoUpdate.equals("true")) {
             updater = new Updater(this, 56042, this.getFile(), Updater.UpdateType.DEFAULT, true);
         } else if (autoUpdate.equals("false")) {
@@ -97,7 +100,9 @@ public class Autocrafter extends JavaPlugin implements Listener {
         }
         this.usePermissions = getConfig().getBoolean("use-permissions", true);
         noPermissionMsg = getConfig().getString("messages.no-permission", null);
+
         // world list
+		debug(" ... checking world list");
         String listtype = getConfig().getString("world-selection", "whitelist").toLowerCase();
         if (listtype.equals("blacklist")) {
             this.worldWhitelist = false;
@@ -108,6 +113,7 @@ public class Autocrafter extends JavaPlugin implements Listener {
         for (String wn: getConfig().getStringList("world-list")) {
             this.worldList.add(wn.toLowerCase());
         }
+		debug(" ... initializing recipes");
         // recipe list
         listtype = getConfig().getString("recipe-selection", "blacklist").toLowerCase();
         if (listtype.equals("whitelist")) {
@@ -119,6 +125,7 @@ public class Autocrafter extends JavaPlugin implements Listener {
         for (String r: getConfig().getStringList("recipe-list")) {
             this.recipeList.add(Material.valueOf(r));
         }
+		debug(" ... setting wildcard permissions");
         wildcardPerm = getServer().getPluginManager().getPermission("autocrafter.create.*");
         if (wildcardPerm == null) {
             wildcardPerm = new Permission("autocrafter.create.*", PermissionDefault.OP);
@@ -136,7 +143,9 @@ public class Autocrafter extends JavaPlugin implements Listener {
                 child.recalculatePermissibles();
             }
         }
-        wildcardPerm.recalculatePermissibles();
+		debug(" ... recalculating permissibles.");
+		wildcardPerm.recalculatePermissibles();
+		debug(" ... Done.");
     }
 
     public void printInventoryContents(Inventory inv) {
@@ -272,7 +281,7 @@ public class Autocrafter extends JavaPlugin implements Listener {
     }
 
     private void debug(String s) {
-        if (getConfig().getBoolean("debug", false)) {
+        if (debug) {
             getLogger().info(s);
         }
     }
