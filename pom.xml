@@ -10,20 +10,6 @@
         <url>https://github.com/andrepl/Autocrafter</url>
     </scm>
 
-
-    <distributionManagement>
-        <repository>
-            <id>mvm-releases</id>
-            <name>releases</name>
-            <url>http://maven.minevsmine.com/content/repositories/releases/</url>
-        </repository>
-        <snapshotRepository>
-            <id>mvm-snapshots</id>
-            <name>snapshots</name>
-            <url>http://maven.minevsmine.com/content/repositories/snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
-
     <build>
         <resources>
             <resource>
