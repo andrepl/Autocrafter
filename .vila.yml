@@ -1,4 +1,4 @@
 scripts:
   - mvn clean package
 artifacts:
-  - target/Autocrafter*.jar
+  - /target/Autocrafter*.jar
