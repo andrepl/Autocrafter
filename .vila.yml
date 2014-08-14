@@ -1,1 +1,4 @@
-scripts: []
+scripts:
+  - mvn clean package
+artifacts:
+  - target/Autocrafter*.jar
