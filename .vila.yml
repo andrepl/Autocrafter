@@ -1,4 +1,4 @@
-scripts:
-  - mvn clean package
+type: maven
+goals: ['clean', 'package']
 artifacts:
   - /target/Autocrafter*.jar
